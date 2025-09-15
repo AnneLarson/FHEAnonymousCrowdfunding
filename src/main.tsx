@@ -14,19 +14,22 @@ import './index.css'
 
 import '@rainbow-me/rainbowkit/styles.css'
 
-// Configure chains & providers
+// Configure chains & providers with fallbacks
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [sepolia, goerli, hardhat],
   [
-    infuraProvider({ apiKey: import.meta.env.VITE_INFURA_PROJECT_ID || 'demo' }),
+    ...(import.meta.env.VITE_INFURA_PROJECT_ID 
+      ? [infuraProvider({ apiKey: import.meta.env.VITE_INFURA_PROJECT_ID })] 
+      : []
+    ),
     publicProvider()
   ]
 )
 
-// Configure wallets
+// Configure wallets with fallback
 const { connectors } = getDefaultWallets({
   appName: 'FHE Anonymous Crowdfunding',
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo',
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '2f5a6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b',
   chains
 })
 
