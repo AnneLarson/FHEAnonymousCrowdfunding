@@ -1,76 +1,22 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { WagmiConfig, createConfig } from 'wagmi'
-import { sepolia, goerli, hardhat } from 'wagmi/chains'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { configureChains, createConfig as createWagmiConfig } from 'wagmi'
-import { infuraProvider } from 'wagmi/providers/infura'
-import { publicProvider } from 'wagmi/providers/public'
-import { Toaster } from 'react-hot-toast'
-
 import App from './App'
 import './index.css'
 
-import '@rainbow-me/rainbowkit/styles.css'
+console.log('🚀 FHE Anonymous Crowdfunding - Starting application...')
 
-// Configure chains & providers with fallbacks
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [sepolia, goerli, hardhat],
-  [
-    ...(import.meta.env.VITE_INFURA_PROJECT_ID 
-      ? [infuraProvider({ apiKey: import.meta.env.VITE_INFURA_PROJECT_ID })] 
-      : []
-    ),
-    publicProvider()
-  ]
-)
-
-// Configure wallets with fallback
-const { connectors } = getDefaultWallets({
-  appName: 'FHE Anonymous Crowdfunding',
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '2f5a6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b',
-  chains
-})
-
-// Create wagmi config
-const wagmiConfig = createWagmiConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-  webSocketPublicClient,
-})
-
-// Create react-query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 3,
-      staleTime: 30000,
-    },
-  },
-})
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider chains={chains} modalSize="compact">
-        <QueryClientProvider client={queryClient}>
-          <App />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#1f2937',
-                color: '#f9fafb',
-                border: '1px solid #374151',
-              },
-            }}
-          />
-        </QueryClientProvider>
-      </RainbowKitProvider>
-    </WagmiConfig>
-  </React.StrictMode>,
-)
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  console.error('❌ Root element not found!')
+  document.body.innerHTML = '<h1>Error: Root element not found</h1>'
+} else {
+  console.log('✅ Root element found, rendering React app...')
+  try {
+    const root = ReactDOM.createRoot(rootElement)
+    root.render(<App />)
+    console.log('✅ React app rendered successfully!')
+  } catch (error) {
+    console.error('❌ Error rendering React app:', error)
+    rootElement.innerHTML = `<h1>Error: ${error.message}</h1>`
+  }
+}
