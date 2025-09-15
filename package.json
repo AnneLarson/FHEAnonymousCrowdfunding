@@ -1,0 +1,92 @@
+{
+  "name": "fhe-anonymous-crowdfunding",
+  "description": "FHE-based anonymous crowdfunding platform with complete privacy protection",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "homepage": "https://fhe-anonymous-crowdfunding.vercel.app",
+  "keywords": [
+    "fhe",
+    "crowdfunding",
+    "privacy",
+    "anonymous",
+    "blockchain",
+    "ethereum",
+    "react",
+    "typescript",
+    "web3",
+    "donations"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.3.2",
+    "@rainbow-me/rainbowkit": "^1.3.1",
+    "@tanstack/react-query": "^5.8.4",
+    "@wagmi/core": "^1.4.13",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.8.1",
+    "fhevmjs": "^0.6.2",
+    "framer-motion": "^10.16.5",
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "7.8.2",
+    "tailwind-merge": "^2.0.0",
+    "viem": "^1.19.11",
+    "wagmi": "^1.4.13",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10",
+    "@types/node": "^20.9.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
+    "@vitejs/plugin-react": "^4.1.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.53.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.4",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0"
+  },
+  "peerDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/fhe-anonymous-crowdfunding"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "FHE Anonymous Crowdfunding Team",
+    "email": "team@fhe-crowdfunding.com"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/fhe-anonymous-crowdfunding/issues"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "npm": "9.8.1"
+  }
+}
