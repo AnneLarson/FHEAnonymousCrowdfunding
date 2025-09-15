@@ -30,7 +30,12 @@ export default defineConfig({
     rollupOptions: {
       external: ['@safe-globalThis/safe-apps-provider', '@safe-globalThis/safe-apps-sdk'],
       onwarn(warning, warn) {
+        // Suppress safe-global warnings
         if (warning.code === 'UNRESOLVED_IMPORT' && warning.source?.includes('@safe-global')) {
+          return;
+        }
+        // Suppress other safe-global related warnings
+        if (warning.message?.includes('@safe-globalThis')) {
           return;
         }
         warn(warning);
@@ -47,6 +52,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'ethers', 'fhevmjs'],
-    exclude: ['@fhevm/solidity']
+    exclude: ['@safe-globalThis/safe-apps-provider', '@safe-globalThis/safe-apps-sdk']
   }
 })
