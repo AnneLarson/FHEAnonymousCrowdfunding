@@ -1,62 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FHE Anonymous Crowdfunding - Working</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-        }
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { text-align: center; margin-bottom: 30px; }
-        .status { background: #4CAF50; padding: 10px; border-radius: 5px; margin: 10px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🔒 FHE Anonymous Crowdfunding</h1>
-        <div class="status">✅ Website is working!</div>
-        <div class="status">✅ Vercel deployment successful!</div>
-        
-        <h2>Debug Information:</h2>
-        <ul>
-            <li>Timestamp: <span id="time"></span></li>
-            <li>User Agent: <span id="ua"></span></li>
-            <li>Location: <span id="loc"></span></li>
-        </ul>
-        
-        <h2>Next Steps:</h2>
-        <p>This is a working static page. The React application will be restored once we fix the build issues.</p>
-        
-        <div style="margin-top: 30px; text-align: center;">
-            <button onclick="testJS()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-                Test JavaScript
-            </button>
-        </div>
-    </div>
-
-    <script>
-        document.getElementById('time').textContent = new Date().toLocaleString();
-        document.getElementById('ua').textContent = navigator.userAgent.substring(0, 50) + '...';
-        document.getElementById('loc').textContent = location.href;
-        
-        function testJS() {
-            alert('JavaScript is working perfectly! ✅');
-        }
-        
-        console.log('Static HTML page loaded successfully');
-    </script>
-</body>
+    <title>FHE Anonymous Crowdfunding</title>
+    <meta name="description" content="Privacy-first crowdfunding platform powered by FHE (Fully Homomorphic Encryption)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-952e3474.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-30840fde.js">
+    <link rel="modulepreload" crossorigin href="/assets/wagmi-54669bf6.js">
+    <link rel="stylesheet" href="/assets/index-a61f0cd4.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
 </html>

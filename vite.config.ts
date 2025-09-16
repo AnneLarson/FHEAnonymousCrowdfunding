@@ -38,6 +38,10 @@ export default defineConfig({
         if (warning.message?.includes('@safe-globalThis')) {
           return;
         }
+        // Suppress fhevmjs warnings
+        if (warning.message?.includes('fhevmjs')) {
+          return;
+        }
         warn(warning);
       },
       output: {
@@ -51,7 +55,10 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'ethers', 'fhevmjs'],
-    exclude: ['@safe-globalThis/safe-apps-provider', '@safe-globalThis/safe-apps-sdk']
+    include: ['react', 'react-dom', 'ethers'],
+    exclude: ['@safe-globalThis/safe-apps-provider', '@safe-globalThis/safe-apps-sdk', 'fhevmjs']
+  },
+  worker: {
+    format: 'es'
   }
 })
