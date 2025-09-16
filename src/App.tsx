@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { createPublicClient, createWalletClient, custom, http, parseEther, formatEther } from 'viem'
-import { mainnet, sepolia } from 'viem/chains'
+import { ethers } from 'ethers'
 import { FHEAnonymousCrowdfundingABI } from './abi/FHEAnonymousCrowdfunding'
 import { initializeFHE, encryptAmount } from './utils/fhe'
 
 // Contract address - FHE Anonymous Crowdfunding deployed contract
 const CONTRACT_ADDRESS = '0x5baB1e95C6Eba8e92CA8f5645A193167E79abD95'
+
+// Sepolia testnet configuration
+const SEPOLIA_CHAIN_ID = '0xaa36a7' // 11155111 in hex
+const SEPOLIA_CONFIG = {
+  chainId: SEPOLIA_CHAIN_ID,
+  chainName: 'Sepolia Test Network',
+  nativeCurrency: {
+    name: 'ETH',
+    symbol: 'ETH',
+    decimals: 18,
+  },
+  rpcUrls: ['https://sepolia.infura.io/v3/'],
+  blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+}
 
 interface Campaign {
   creator: string
@@ -23,6 +36,9 @@ function App() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'browse' | 'create'>('browse')
+  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null)
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null)
+  const [contract, setContract] = useState<ethers.Contract | null>(null)
   
   // Form states
   const [title, setTitle] = useState('')
@@ -31,25 +47,19 @@ function App() {
   const [deadline, setDeadline] = useState('')
   const [donationAmount, setDonationAmount] = useState('')
 
-  const publicClient = createPublicClient({
-    chain: sepolia,
-    transport: http()
-  })
-
   // Check if wallet is connected on load
   useEffect(() => {
     checkConnection()
-    loadCampaigns()
     initializeFHE().catch(console.error)
   }, [])
 
+  // Step 1: Detection - Check for window.ethereum (MetaMask provider)
   const checkConnection = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' })
         if (accounts.length > 0) {
-          setIsConnected(true)
-          setAccount(accounts[0])
+          await setupProviderAndContract(accounts[0])
         }
       } catch (error) {
         console.error('Error checking connection:', error)
@@ -57,71 +67,173 @@ function App() {
     }
   }
 
+  // Complete wallet connection flow
   const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        setLoading(true)
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-        setIsConnected(true)
-        setAccount(accounts[0])
-        await loadCampaigns()
-      } catch (error) {
-        console.error('Error connecting wallet:', error)
-        alert('Failed to connect wallet. Please try again.')
-      } finally {
-        setLoading(false)
-      }
-    } else {
+    // Step 1: Detection - Check for MetaMask
+    if (typeof window.ethereum === 'undefined') {
       alert('MetaMask is not installed. Please install MetaMask to use this dApp.')
+      return
+    }
+
+    try {
+      setLoading(true)
+      
+      // Step 2: Request Access - Get user permission with eth_requestAccounts
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      
+      if (accounts.length === 0) {
+        throw new Error('No accounts found')
+      }
+
+      // Step 3: Network Validation - Check connection to Sepolia testnet
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+      
+      // Step 4: Network Switching - Auto switch/add Sepolia if needed
+      if (chainId !== SEPOLIA_CHAIN_ID) {
+        await switchToSepolia()
+      }
+
+      // Step 5: Provider Setup - Create ethers.js BrowserProvider and signer
+      await setupProviderAndContract(accounts[0])
+      
+      // Step 7: State Update - Update React state with account and contract
+      setIsConnected(true)
+      setAccount(accounts[0])
+      
+      // Step 8: Success Handling - Show success message
+      alert('Connected to Sepolia! ✅')
+      
+      // Get Initial State - Load campaigns
+      await loadCampaigns()
+      
+    } catch (error) {
+      console.error('Error connecting wallet:', error)
+      alert('Failed to connect wallet. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Switch to or add Sepolia network
+  const switchToSepolia = async () => {
+    try {
+      // Try to switch to Sepolia
+      await window.ethereum?.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: SEPOLIA_CHAIN_ID }],
+      })
+    } catch (switchError: any) {
+      // If network doesn't exist, add it
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum?.request({
+            method: 'wallet_addEthereumChain',
+            params: [SEPOLIA_CONFIG],
+          })
+        } catch (addError) {
+          throw new Error('Failed to add Sepolia network')
+        }
+      } else {
+        throw switchError
+      }
+    }
+  }
+
+  // Step 5 & 6: Provider Setup and Contract Initialization
+  const setupProviderAndContract = async (accountAddress: string) => {
+    try {
+      // Create ethers.js BrowserProvider
+      const ethersProvider = new ethers.BrowserProvider(window.ethereum!)
+      
+      // Get signer
+      const ethersSigner = await ethersProvider.getSigner()
+      
+      // Step 6: Contract Initialization - Create game contract instance
+      const gameContract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        FHEAnonymousCrowdfundingABI,
+        ethersSigner
+      )
+
+      setProvider(ethersProvider)
+      setSigner(ethersSigner)
+      setContract(gameContract)
+      
+    } catch (error) {
+      console.error('Error setting up provider and contract:', error)
+      throw error
     }
   }
 
   const loadCampaigns = async () => {
-    try {
-      setLoading(true)
-      
-      // Get campaigns count
-      const campaignsCount = await publicClient.readContract({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: FHEAnonymousCrowdfundingABI,
-        functionName: 'getCampaignsCount',
-      })
-
-      const loadedCampaigns: Campaign[] = []
-      
-      // Load each campaign
-      for (let i = 0; i < Number(campaignsCount); i++) {
-        const campaign = await publicClient.readContract({
-          address: CONTRACT_ADDRESS as `0x${string}`,
-          abi: FHEAnonymousCrowdfundingABI,
-          functionName: 'getCampaign',
-          args: [BigInt(i)],
-        }) as Campaign
-
-        loadedCampaigns.push(campaign)
-      }
-
-      setCampaigns(loadedCampaigns)
-    } catch (error) {
-      console.error('Error loading campaigns:', error)
-      // For demo purposes, show sample campaigns if contract not deployed
+    if (!contract) {
+      console.log('Contract not initialized, showing demo campaigns')
+      // Show demo campaigns if contract not connected
       setCampaigns([
         {
           creator: '0x1234...5678',
           title: 'Help Build Clean Water Wells',
           description: 'Supporting clean water access in rural communities with complete donor privacy.',
-          target: parseEther('10'),
+          target: ethers.parseEther('10'),
           deadline: BigInt(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          amountCollected: parseEther('3.5'),
+          amountCollected: ethers.parseEther('3.5'),
           withdrawn: false
         },
         {
           creator: '0x8765...4321',
           title: 'Anonymous Medical Research Fund',
           description: 'Private funding for critical medical research. All donations are completely anonymous.',
-          target: parseEther('25'),
+          target: ethers.parseEther('25'),
           deadline: BigInt(Date.now() + 45 * 24 * 60 * 60 * 1000),
-          amountCollected: parseEther('18.2'),
+          amountCollected: ethers.parseEther('18.2'),
+          withdrawn: false
+        }
+      ])
+      return
+    }
+
+    try {
+      setLoading(true)
+      
+      // Get campaigns count using ethers.js
+      const campaignsCount = await contract.getCampaignsCount()
+      const loadedCampaigns: Campaign[] = []
+      
+      // Load each campaign
+      for (let i = 0; i < Number(campaignsCount); i++) {
+        const campaign = await contract.getCampaign(i)
+        loadedCampaigns.push({
+          creator: campaign.creator,
+          title: campaign.title,
+          description: campaign.description,
+          target: campaign.target,
+          deadline: campaign.deadline,
+          amountCollected: campaign.amountCollected,
+          withdrawn: campaign.withdrawn
+        })
+      }
+
+      setCampaigns(loadedCampaigns)
+    } catch (error) {
+      console.error('Error loading campaigns:', error)
+      // Show demo campaigns on error
+      setCampaigns([
+        {
+          creator: '0x1234...5678',
+          title: 'Help Build Clean Water Wells',
+          description: 'Supporting clean water access in rural communities with complete donor privacy.',
+          target: ethers.parseEther('10'),
+          deadline: BigInt(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          amountCollected: ethers.parseEther('3.5'),
+          withdrawn: false
+        },
+        {
+          creator: '0x8765...4321',
+          title: 'Anonymous Medical Research Fund',
+          description: 'Private funding for critical medical research. All donations are completely anonymous.',
+          target: ethers.parseEther('25'),
+          deadline: BigInt(Date.now() + 45 * 24 * 60 * 60 * 1000),
+          amountCollected: ethers.parseEther('18.2'),
           withdrawn: false
         }
       ])
@@ -131,7 +243,7 @@ function App() {
   }
 
   const createCampaign = async () => {
-    if (!isConnected || !title || !description || !target || !deadline) {
+    if (!isConnected || !contract || !title || !description || !target || !deadline) {
       alert('Please fill in all fields and connect your wallet.')
       return
     }
@@ -139,23 +251,18 @@ function App() {
     try {
       setLoading(true)
       
-      const walletClient = createWalletClient({
-        chain: sepolia,
-        transport: custom(window.ethereum)
-      })
-
-      const targetWei = parseEther(target)
+      const targetWei = ethers.parseEther(target)
       const deadlineTimestamp = BigInt(new Date(deadline).getTime())
 
-      const hash = await walletClient.writeContract({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: FHEAnonymousCrowdfundingABI,
-        functionName: 'createCampaign',
-        args: [title, description, targetWei, deadlineTimestamp],
-        account: account as `0x${string}`,
-      })
-
-      alert(`Campaign created! Transaction: ${hash}`)
+      // Create campaign using ethers.js contract
+      const tx = await contract.createCampaign(title, description, targetWei, deadlineTimestamp)
+      
+      alert(`Campaign creation submitted! Transaction: ${tx.hash}`)
+      
+      // Wait for transaction confirmation
+      await tx.wait()
+      
+      alert('Campaign created successfully! ✅')
       
       // Reset form
       setTitle('')
@@ -175,7 +282,7 @@ function App() {
   }
 
   const donateToCampaign = async (campaignId: number) => {
-    if (!isConnected || !donationAmount) {
+    if (!isConnected || !contract || !donationAmount) {
       alert('Please connect your wallet and enter a donation amount.')
       return
     }
@@ -183,27 +290,23 @@ function App() {
     try {
       setLoading(true)
       
-      const walletClient = createWalletClient({
-        chain: sepolia,
-        transport: custom(window.ethereum)
-      })
-
-      const donationWei = parseEther(donationAmount)
+      const donationWei = ethers.parseEther(donationAmount)
       
       // Encrypt the donation amount using FHE
       const amountInWei = Number(donationWei)
       const encryptedAmount = await encryptAmount(amountInWei)
 
-      const hash = await walletClient.writeContract({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: FHEAnonymousCrowdfundingABI,
-        functionName: 'contribute',
-        args: [BigInt(campaignId), encryptedAmount as `0x${string}`],
-        account: account as `0x${string}`,
-        value: donationWei,
+      // Make donation using ethers.js contract
+      const tx = await contract.contribute(BigInt(campaignId), encryptedAmount, {
+        value: donationWei
       })
 
-      alert(`Anonymous donation sent! Transaction: ${hash}`)
+      alert(`Anonymous donation submitted! Transaction: ${tx.hash}`)
+      
+      // Wait for transaction confirmation
+      await tx.wait()
+      
+      alert('Anonymous donation sent successfully! ✅')
       setDonationAmount('')
       await loadCampaigns()
     } catch (error) {
@@ -224,6 +327,10 @@ function App() {
 
   const getProgress = (collected: bigint, target: bigint) => {
     return Number((collected * 100n) / target)
+  }
+
+  const formatEther = (value: bigint) => {
+    return ethers.formatEther(value)
   }
 
   return (
