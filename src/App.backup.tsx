@@ -52,9 +52,9 @@ function App() {
           borderRadius: '8px',
           marginBottom: '20px'
         }}>
-          <h2>🔧 Next: Connect Your Wallet</h2>
+          <h2>🔧 Development Status</h2>
           <p>✅ React application successfully deployed</p>
-          <p>⏳ 🔐 Click "Connect Wallet" button below to access full features</p>
+          <p>⏳ Web3 wallet integration (coming soon)</p>
           <p>⏳ Campaign creation interface (coming soon)</p>
           <p>⏳ Anonymous donation system (coming soon)</p>
         </div>
@@ -72,7 +72,7 @@ function App() {
               cursor: 'pointer'
             }}
           >
-            Connect Wallet (Demo)
+            Test Platform
           </button>
         </div>
 
